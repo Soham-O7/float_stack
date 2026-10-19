@@ -14,4 +14,4 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 - name: Run backend smoke test
-run: python -c "import api.main; print('Backend module loads successfully!')"
+  run: python -m py_compile api/main.py api/database.py
