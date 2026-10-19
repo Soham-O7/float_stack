@@ -13,5 +13,5 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Run digits demo smoke test
-        run: python demo_digits.py
+- name: Run backend smoke test
+run: python -c "import api.main; print('Backend module loads successfully!')"
