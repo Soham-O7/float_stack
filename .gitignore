@@ -4,3 +4,7 @@ __pycache__/
 data/
 *.parquet
 .ipynb_checkpoints/
+
+# CodeCarbon per-run telemetry reports and smoke-test output
+benchmarks/codecarbon/
+benchmarks/codecarbon_smoke.csv
