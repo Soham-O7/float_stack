@@ -12,13 +12,19 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. Advanced SaaS Custom CSS (Overriding Streamlit's default look)
+# 2. Advanced SaaS Custom CSS (Theme-Adaptive & Non-Intrusive)
 st.markdown("""
 <style>
-    /* Global App Background & Font */
+    /* Automatically match Streamlit's active theme (Light or Dark) */
     .stApp {
-        background-color: #F8FAFC;
+        background-color: var(--background-color);
+        color: var(--text-color);
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    /* Ensure all generic text elements inherit the theme's correct color */
+    h1, h2, h3, h4, h5, h6, p, span, label, div {
+        color: inherit;
     }
     
     /* Hide default Streamlit header/footer branding for clean look */
@@ -28,8 +34,8 @@ st.markdown("""
 
     /* Main Container Card */
     .saas-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
+        background: var(--secondary-background-color);
+        border: 1px solid rgba(128, 128, 128, 0.2);
         border-radius: 16px;
         padding: 32px;
         box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
@@ -64,15 +70,14 @@ st.markdown("""
         align-items: center;
         gap: 12px;
         font-weight: 700;
-        color: #0F172A;
         font-size: 20px;
         margin-bottom: 20px;
     }
 
     /* Stat Cards matching PDF */
     .metric-box-green {
-        background-color: #F0FDF4;
-        border: 1px solid #DCFCE7;
+        background-color: rgba(22, 163, 74, 0.1);
+        border: 1px solid rgba(22, 163, 74, 0.2);
         border-radius: 16px;
         padding: 24px;
         text-align: center;
@@ -90,8 +95,8 @@ st.markdown("""
     }
 
     .metric-box-purple {
-        background-color: #F5F3FF;
-        border: 1px solid #EDE9FE;
+        background-color: rgba(124, 58, 237, 0.1);
+        border: 1px solid rgba(124, 58, 237, 0.2);
         border-radius: 16px;
         padding: 24px;
         text-align: center;
@@ -117,9 +122,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Right after your closing CSS block:
-st.markdown("</style>", unsafe_allow_html=True)
-
 # 1. Create the tabs here:
 tab1, tab2, tab3 = st.tabs(["📁 Upload & Config", "⚙️ Optimized Output", "📊 Scatter Analysis"])
 
@@ -142,9 +144,6 @@ with tab2:
 with tab3:
     st.subheader("Interactive Scatter Plot Analysis")
     
-    import numpy as np
-    import plotly.graph_objects as go
-    
     np.random.seed(42)
     x_orig = np.random.randn(500)
     y_orig = np.random.randn(500)
@@ -156,6 +155,7 @@ with tab3:
     
     fig.update_layout(template="plotly_white", height=450, margin=dict(l=20, r=20, t=30, b=20))
     st.plotly_chart(fig, use_container_width=True)
+
 # ==========================================
 # HERO SECTION (Matching PDF Header)
 # ==========================================
@@ -170,6 +170,7 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
 # Initialize session state step if it doesn't exist
 if "step" not in st.session_state:
     st.session_state.step = 1
@@ -195,14 +196,8 @@ if st.session_state.step == 1:
     col_c1, col_c2 = st.columns([1, 1], gap="large")
     
     with col_c1:
-        with col_c1:
-            st.markdown("#### Upload Dataset")
-            
-            # --- REPLACE THIS LINE: ---
-            uploaded_file = st.file_uploader("Drag and drop your files here (ZIP, CSV up to 500 MB)", type=["csv", "zip"])
-            
-            # --- WITH THIS LINE: ---
-            # uploaded_file = st.file_uploader("Drag and drop your files here", type=["csv", "zip", "txt"])
+        st.markdown("#### Upload Dataset")
+        uploaded_file = st.file_uploader("Drag and drop your files here (ZIP, CSV up to 500 MB)", type=["csv", "zip"])
         st.info("💡 **Tip:** Or click below to use the built-in MNIST sample data (60,000 images).")
         if st.button("Use MNIST Sample Data", use_container_width=True):
             st.success("mnist_sample.zip selected successfully!")
@@ -288,26 +283,18 @@ elif st.session_state.step == 3:
     st.write("")
     st.divider()
 
-    # Carousel / Image Preview Section requested by teammate
-    import plotly.graph_objects as go
-    import numpy as np
-
     st.markdown("### 📊 Dataset Sample Distribution Comparison")
 
-    # Generate clean demo data points showing high-density vs pruned points
     np.random.seed(42)
     x_orig = np.random.randn(500)
     y_orig = np.random.randn(500)
 
-    # Select a clean subset for "after pruning"
     keep_idx = np.random.choice(500, size=200, replace=False)
     x_pruned = x_orig[keep_idx]
     y_pruned = y_orig[keep_idx]
 
-    # Create subplots / side-by-side view
     fig = go.Figure()
 
-    # Original Data Trace
     fig.add_trace(go.Scatter(
         x=x_orig, y=y_orig,
         mode='markers',
@@ -315,7 +302,6 @@ elif st.session_state.step == 3:
         marker=dict(color='#FF6B6B', opacity=0.4, size=7)
     ))
 
-    # Pruned Data Trace
     fig.add_trace(go.Scatter(
         x=x_pruned, y=y_pruned,
         mode='markers',
@@ -337,7 +323,6 @@ elif st.session_state.step == 3:
 
     st.divider()
 
-    # Benchmark Table
     st.markdown("### 📊 Performance Benchmark Table")
     if proof_table:
         df = pd.DataFrame(proof_table)
