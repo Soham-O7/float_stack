@@ -8,13 +8,20 @@ from api.database import get_db
 
 # Contract A imports from Member 1's engine
 from datadiet import score_dataset, health_report, auto_select, select_subset
+#from datadiet import score_dataset, health_report, auto_select, select_subset
 
 app = FastAPI(title="DataDiet API", version="1.0")
 
 UPLOAD_DIR = Path("data/uploads")
 OUTPUT_DIR = Path("data/outputs")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+except FileExistsError:
+    pass
+try:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+except FileExistsError:
+    pass
 
 class JobRequest(BaseModel):
     dataset_id: str
