@@ -7,7 +7,6 @@ from pydantic import BaseModel
 from api.database import get_db
 
 # Contract A imports from Member 1's engine
-from datadiet import score_dataset, health_report, auto_select, select_subset
 #from datadiet import score_dataset, health_report, auto_select, select_subset
 
 app = FastAPI(title="DataDiet API", version="1.0")
