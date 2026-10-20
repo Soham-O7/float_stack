@@ -253,6 +253,8 @@ elif st.session_state.step == 3:
     st.markdown('<div class="step-header">🏆 Step 3: Results, Impact, & Accuracy Proof</div>', unsafe_allow_html=True)
     
     res = st.session_state.get("backend_data", {})
+    if not isinstance(res, dict):
+        res = {}
     report = res.get("health_report", {})
     proof_table = res.get("proof_table", [])
     
