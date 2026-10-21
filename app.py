@@ -63,6 +63,23 @@ bright_styles = """
         box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
     }
 
+    /* Hero Banner in Bright Mode */
+    .hero-banner {
+        background: linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 100%) !important;
+        border: 1px solid #CBD5E1 !important;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
+        color: #0F172A !important;
+    }
+    .hero-banner h1 {
+        color: #0F172A !important;
+    }
+    .hero-banner p {
+        color: #475569 !important;
+    }
+    .hero-banner span {
+        color: #FFFFFF !important;
+    }
+
     /* Segmented Theme Toggle Pill in Bright Mode */
     div[data-testid="stRadio"] > div[role="radiogroup"] {
         background: #E2E8F0 !important;
@@ -278,6 +295,23 @@ dark_styles = """
         box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25) !important;
     }
 
+    /* Hero Banner in Dark Mode */
+    .hero-banner {
+        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4) !important;
+        color: #FFFFFF !important;
+    }
+    .hero-banner h1 {
+        color: #FFFFFF !important;
+    }
+    .hero-banner p {
+        color: #CBD5E1 !important;
+    }
+    .hero-banner span {
+        color: #FFFFFF !important;
+    }
+
     /* Segmented Theme Toggle Pill in Dark Mode */
     div[data-testid="stRadio"] > div[role="radiogroup"] {
         background: #1F2937 !important;
@@ -491,25 +525,20 @@ st.markdown("<style>\n" + theme_specific_css + """
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
-    /* Hero Banner */
+    /* Hero Banner Base Layout */
     .hero-banner {
-        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
         border-radius: 20px;
         padding: 40px;
-        color: #FFFFFF !important;
         margin-bottom: 30px;
-        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
     }
     
     .hero-banner h1 {
-        color: #FFFFFF !important;
         font-size: 36px;
         font-weight: 800;
         margin-bottom: 10px;
     }
 
     .hero-banner p {
-        color: #CBD5E1 !important;
         font-size: 16px;
     }
 
