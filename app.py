@@ -12,9 +12,253 @@ st.set_page_config(
     layout="wide"
 )
 
-# 2. Advanced SaaS Custom CSS (Theme-Adaptive & Non-Intrusive)
-st.markdown("""
-<style>
+# 2. Theme State Management & Persistence
+theme_options = ["Bright Mode", "Dark Mode", "System"]
+default_theme = "Dark Mode"
+try:
+    if "theme" in st.query_params:
+        qp_theme = st.query_params["theme"]
+        if qp_theme in theme_options:
+            default_theme = qp_theme
+except Exception:
+    pass
+
+if "app_theme_mode" not in st.session_state:
+    st.session_state["app_theme_mode"] = default_theme
+
+current_theme = st.session_state["app_theme_mode"]
+
+def sync_theme():
+    try:
+        st.query_params["theme"] = st.session_state["app_theme_mode"]
+    except Exception:
+        pass
+
+# 3. Dynamic Theme Styles (Bright Mode, Dark Mode, and System)
+if current_theme == "Bright Mode":
+    theme_specific_css = """
+        :root, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+            --background-color: #F8FAFC !important;
+            --secondary-background-color: #FFFFFF !important;
+            --text-color: #0F172A !important;
+            background-color: #F8FAFC !important;
+            color: #0F172A !important;
+        }
+        .saas-card {
+            background: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
+            color: #0F172A !important;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
+        }
+        .step-header {
+            color: #0F172A !important;
+        }
+        [data-baseweb="tab-list"] {
+            background-color: #F1F5F9 !important;
+        }
+        button[data-baseweb="tab"] {
+            color: #64748B !important;
+        }
+        button[data-baseweb="tab"][aria-selected="true"] {
+            color: #4F46E5 !important;
+        }
+        [data-baseweb="select"] > div {
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+            border-color: #CBD5E1 !important;
+        }
+        [data-baseweb="select"] * {
+            color: #0F172A !important;
+        }
+        [data-testid="stFileUploader"] section {
+            background-color: #F1F5F9 !important;
+            border-color: #CBD5E1 !important;
+        }
+        [data-testid="stFileUploader"] section span, [data-testid="stFileUploader"] section small {
+            color: #475569 !important;
+        }
+        [data-testid="stSlider"] div {
+            color: #0F172A !important;
+        }
+        [data-testid="stDataFrame"] {
+            background-color: #FFFFFF !important;
+        }
+        [data-testid="stMetricValue"] {
+            color: #0F172A !important;
+        }
+        [data-testid="stMetricLabel"] {
+            color: #64748B !important;
+        }
+    """
+elif current_theme == "Dark Mode":
+    theme_specific_css = """
+        :root, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+            --background-color: #0E1117 !important;
+            --secondary-background-color: #1F2937 !important;
+            --text-color: #FFFFFF !important;
+            background-color: #0E1117 !important;
+            color: #FFFFFF !important;
+        }
+        .saas-card {
+            background: #1F2937 !important;
+            border: 1px solid rgba(128, 128, 128, 0.2) !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25) !important;
+        }
+        .step-header {
+            color: #FFFFFF !important;
+        }
+        [data-baseweb="tab-list"] {
+            background-color: #111827 !important;
+        }
+        button[data-baseweb="tab"] {
+            color: #94A3B8 !important;
+        }
+        button[data-baseweb="tab"][aria-selected="true"] {
+            color: #818CF8 !important;
+        }
+        [data-baseweb="select"] > div {
+            background-color: #1F2937 !important;
+            color: #FFFFFF !important;
+            border-color: rgba(128, 128, 128, 0.3) !important;
+        }
+        [data-baseweb="select"] * {
+            color: #FFFFFF !important;
+        }
+        [data-testid="stFileUploader"] section {
+            background-color: #111827 !important;
+            border-color: rgba(128, 128, 128, 0.3) !important;
+        }
+        [data-testid="stFileUploader"] section span, [data-testid="stFileUploader"] section small {
+            color: #94A3B8 !important;
+        }
+        [data-testid="stSlider"] div {
+            color: #FFFFFF !important;
+        }
+        [data-testid="stDataFrame"] {
+            background-color: #1F2937 !important;
+        }
+        [data-testid="stMetricValue"] {
+            color: #FFFFFF !important;
+        }
+        [data-testid="stMetricLabel"] {
+            color: #94A3B8 !important;
+        }
+    """
+else:  # System
+    theme_specific_css = """
+        @media (prefers-color-scheme: light) {
+            :root, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+                --background-color: #F8FAFC !important;
+                --secondary-background-color: #FFFFFF !important;
+                --text-color: #0F172A !important;
+                background-color: #F8FAFC !important;
+                color: #0F172A !important;
+            }
+            .saas-card {
+                background: #FFFFFF !important;
+                border: 1px solid #E2E8F0 !important;
+                color: #0F172A !important;
+                box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
+            }
+            .step-header {
+                color: #0F172A !important;
+            }
+            [data-baseweb="tab-list"] {
+                background-color: #F1F5F9 !important;
+            }
+            button[data-baseweb="tab"] {
+                color: #64748B !important;
+            }
+            button[data-baseweb="tab"][aria-selected="true"] {
+                color: #4F46E5 !important;
+            }
+            [data-baseweb="select"] > div {
+                background-color: #FFFFFF !important;
+                color: #0F172A !important;
+                border-color: #CBD5E1 !important;
+            }
+            [data-baseweb="select"] * {
+                color: #0F172A !important;
+            }
+            [data-testid="stFileUploader"] section {
+                background-color: #F1F5F9 !important;
+                border-color: #CBD5E1 !important;
+            }
+            [data-testid="stFileUploader"] section span, [data-testid="stFileUploader"] section small {
+                color: #475569 !important;
+            }
+            [data-testid="stSlider"] div {
+                color: #0F172A !important;
+            }
+            [data-testid="stDataFrame"] {
+                background-color: #FFFFFF !important;
+            }
+            [data-testid="stMetricValue"] {
+                color: #0F172A !important;
+            }
+            [data-testid="stMetricLabel"] {
+                color: #64748B !important;
+            }
+        }
+        @media (prefers-color-scheme: dark) {
+            :root, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+                --background-color: #0E1117 !important;
+                --secondary-background-color: #1F2937 !important;
+                --text-color: #FFFFFF !important;
+                background-color: #0E1117 !important;
+                color: #FFFFFF !important;
+            }
+            .saas-card {
+                background: #1F2937 !important;
+                border: 1px solid rgba(128, 128, 128, 0.2) !important;
+                color: #FFFFFF !important;
+                box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25) !important;
+            }
+            .step-header {
+                color: #FFFFFF !important;
+            }
+            [data-baseweb="tab-list"] {
+                background-color: #111827 !important;
+            }
+            button[data-baseweb="tab"] {
+                color: #94A3B8 !important;
+            }
+            button[data-baseweb="tab"][aria-selected="true"] {
+                color: #818CF8 !important;
+            }
+            [data-baseweb="select"] > div {
+                background-color: #1F2937 !important;
+                color: #FFFFFF !important;
+                border-color: rgba(128, 128, 128, 0.3) !important;
+            }
+            [data-baseweb="select"] * {
+                color: #FFFFFF !important;
+            }
+            [data-testid="stFileUploader"] section {
+                background-color: #111827 !important;
+                border-color: rgba(128, 128, 128, 0.3) !important;
+            }
+            [data-testid="stFileUploader"] section span, [data-testid="stFileUploader"] section small {
+                color: #94A3B8 !important;
+            }
+            [data-testid="stSlider"] div {
+                color: #FFFFFF !important;
+            }
+            [data-testid="stDataFrame"] {
+                background-color: #1F2937 !important;
+            }
+            [data-testid="stMetricValue"] {
+                color: #FFFFFF !important;
+            }
+            [data-testid="stMetricLabel"] {
+                color: #94A3B8 !important;
+            }
+        }
+    """
+
+# 4. Advanced SaaS Custom CSS (Theme-Adaptive & Non-Intrusive)
+st.markdown("<style>\n" + theme_specific_css + """
     /* Automatically match Streamlit's active theme (Light or Dark) */
     .stApp {
         background-color: var(--background-color);
@@ -119,8 +363,74 @@ st.markdown("""
         font-weight: 600;
         padding: 10px 24px;
     }
+
+    /* Segmented Theme Toggle Pill Styling */
+    div[data-testid="stRadio"] {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+    }
+    div[data-testid="stRadio"] > div[role="radiogroup"] {
+        display: inline-flex;
+        flex-direction: row;
+        align-items: center;
+        background: rgba(128, 128, 128, 0.12);
+        padding: 3px;
+        border-radius: 9999px;
+        border: 1px solid rgba(128, 128, 128, 0.2);
+        gap: 3px;
+    }
+    div[data-testid="stRadio"] [data-baseweb="radio"] {
+        background: transparent;
+        padding: 5px 14px !important;
+        border-radius: 9999px;
+        margin: 0 !important;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+    }
+    div[data-testid="stRadio"] [data-baseweb="radio"]:hover {
+        background: rgba(128, 128, 128, 0.1);
+    }
+    div[data-testid="stRadio"] [data-baseweb="radio"]:has(input:checked) {
+        background: #4F46E5 !important;
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+    }
+    div[data-testid="stRadio"] [data-baseweb="radio"]:has(input:checked) * {
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stRadio"] [data-baseweb="radio"] > div:first-child {
+        display: none !important;
+    }
+
+    /* Plotly SVG Text & Grid Theme Adaptation */
+    .js-plotly-plot .xtick text, 
+    .js-plotly-plot .ytick text, 
+    .js-plotly-plot .gtitle, 
+    .js-plotly-plot .legendtext text,
+    .js-plotly-plot text {
+        fill: var(--text-color) !important;
+    }
+    .js-plotly-plot .xgrid, 
+    .js-plotly-plot .ygrid {
+        stroke: rgba(128, 128, 128, 0.2) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+# Theme Selector Toggle in UI
+theme_col_space, theme_col_widget = st.columns([3.2, 1.8])
+with theme_col_widget:
+    theme_idx = theme_options.index(current_theme) if current_theme in theme_options else 1
+    st.radio(
+        "Theme",
+        options=theme_options,
+        index=theme_idx,
+        horizontal=True,
+        label_visibility="collapsed",
+        key="app_theme_mode",
+        on_change=sync_theme
+    )
 
 # 1. Create the tabs here:
 tab1, tab2, tab3 = st.tabs(["📁 Upload & Config", "⚙️ Optimized Output", "📊 Scatter Analysis"])
@@ -153,7 +463,14 @@ with tab3:
     fig.add_trace(go.Scatter(x=x_orig, y=y_orig, mode='markers', name='Full Dataset', marker=dict(color='#FF6B6B', opacity=0.4)))
     fig.add_trace(go.Scatter(x=x_orig[keep_idx], y=y_orig[keep_idx], mode='markers', name='Pruned Dataset', marker=dict(color='#4ECDC4', opacity=0.9)))
     
-    fig.update_layout(template="plotly_white", height=450, margin=dict(l=20, r=20, t=30, b=20))
+    chart_template = "plotly_white" if current_theme == "Bright Mode" else "plotly_dark"
+    fig.update_layout(
+        template=chart_template,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=450,
+        margin=dict(l=20, r=20, t=30, b=20)
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 # ==========================================
@@ -311,11 +628,14 @@ elif st.session_state.step == 3:
         marker=dict(color='#4ECDC4', opacity=0.9, size=9)
     ))
 
+    chart_template = "plotly_white" if current_theme == "Bright Mode" else "plotly_dark"
     fig.update_layout(
         title="Data Density Preservation (Original vs. Pruned)",
         xaxis_title="Feature Dimension 1",
         yaxis_title="Feature Dimension 2",
-        template="plotly_white",
+        template=chart_template,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
         height=420,
         margin=dict(l=20, r=20, t=50, b=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
