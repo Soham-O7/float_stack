@@ -72,6 +72,9 @@ bright_styles = """
     }
     .hero-banner h1,
     .hero-banner h1 *,
+    .hero-banner .hero-title,
+    .hero-banner .hero-title *,
+    .hero-title,
     div.hero-banner h1,
     [data-testid="stMarkdownContainer"] .hero-banner h1 {
         color: #0F172A !important;
@@ -310,6 +313,9 @@ dark_styles = """
     }
     .hero-banner h1,
     .hero-banner h1 *,
+    .hero-banner .hero-title,
+    .hero-banner .hero-title *,
+    .hero-title,
     div.hero-banner h1,
     [data-testid="stMarkdownContainer"] .hero-banner h1 {
         color: #FFFFFF !important;
@@ -705,7 +711,7 @@ st.markdown(f"""
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
             <span style="background: #10B981; color: white !important; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">GREEN AI</span>
-            <h1 style="margin-top: 10px; color: {hero_h1_color} !important; font-size: 36px; font-weight: 800;">DataDiet</h1>
+            <div class="hero-title" style="margin-top: 10px; color: {hero_h1_color} !important; font-size: 36px; font-weight: 800; line-height: 1.2;">DataDiet</div>
             <p style="color: {hero_p_color} !important; font-size: 16px;">Train on less. Lose nothing. Upload your dataset and DataDiet trims samples your model doesn't need.</p>
         </div>
     </div>
