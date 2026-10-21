@@ -70,10 +70,16 @@ bright_styles = """
         box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
         color: #0F172A !important;
     }
-    .hero-banner h1 {
+    .hero-banner h1,
+    .hero-banner h1 *,
+    div.hero-banner h1,
+    [data-testid="stMarkdownContainer"] .hero-banner h1 {
         color: #0F172A !important;
     }
-    .hero-banner p {
+    .hero-banner p,
+    .hero-banner p *,
+    div.hero-banner p,
+    [data-testid="stMarkdownContainer"] .hero-banner p {
         color: #475569 !important;
     }
     .hero-banner span {
@@ -302,10 +308,16 @@ dark_styles = """
         box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4) !important;
         color: #FFFFFF !important;
     }
-    .hero-banner h1 {
+    .hero-banner h1,
+    .hero-banner h1 *,
+    div.hero-banner h1,
+    [data-testid="stMarkdownContainer"] .hero-banner h1 {
         color: #FFFFFF !important;
     }
-    .hero-banner p {
+    .hero-banner p,
+    .hero-banner p *,
+    div.hero-banner p,
+    [data-testid="stMarkdownContainer"] .hero-banner p {
         color: #CBD5E1 !important;
     }
     .hero-banner span {
@@ -682,13 +694,19 @@ with tab3:
 # ==========================================
 # HERO SECTION (Matching PDF Header)
 # ==========================================
-st.markdown("""
-<div class="hero-banner">
+hero_h1_color = "#0F172A" if current_theme == "Bright Mode" else "#FFFFFF"
+hero_p_color = "#475569" if current_theme == "Bright Mode" else "#CBD5E1"
+hero_bg = "linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 100%)" if current_theme == "Bright Mode" else "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)"
+hero_border = "1px solid #CBD5E1" if current_theme == "Bright Mode" else "1px solid rgba(255, 255, 255, 0.1)"
+hero_shadow = "0 4px 20px -2px rgba(0, 0, 0, 0.05)" if current_theme == "Bright Mode" else "0 10px 25px -5px rgba(15, 23, 42, 0.4)"
+
+st.markdown(f"""
+<div class="hero-banner" style="background: {hero_bg} !important; border: {hero_border} !important; box-shadow: {hero_shadow} !important; border-radius: 20px; padding: 40px; margin-bottom: 30px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
-            <span style="background: #10B981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">GREEN AI</span>
-            <h1 style="margin-top: 10px;">DataDiet</h1>
-            <p>Train on less. Lose nothing. Upload your dataset and DataDiet trims samples your model doesn't need.</p>
+            <span style="background: #10B981; color: white !important; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">GREEN AI</span>
+            <h1 style="margin-top: 10px; color: {hero_h1_color} !important; font-size: 36px; font-weight: 800;">DataDiet</h1>
+            <p style="color: {hero_p_color} !important; font-size: 16px;">Train on less. Lose nothing. Upload your dataset and DataDiet trims samples your model doesn't need.</p>
         </div>
     </div>
 </div>
