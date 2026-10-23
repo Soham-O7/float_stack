@@ -937,63 +937,56 @@ elif st.session_state.step == 3:
 
     st.markdown("### 📊 Performance Benchmark Table")
     if proof_table:
+        df = pd.DataFrame(proof_table)
         is_bright = (current_theme == "Bright Mode")
         tbl_bg = "#FFFFFF" if is_bright else "#1E293B"
-        tbl_border = "1px solid #CBD5E1" if is_bright else "1px solid rgba(255, 255, 255, 0.12)"
+        tbl_border = "#CBD5E1" if is_bright else "rgba(255, 255, 255, 0.15)"
         th_bg = "#F1F5F9" if is_bright else "#0F172A"
-        th_color = "#0F172A" if is_bright else "#FFFFFF"
-        th_border = "2px solid #CBD5E1" if is_bright else "2px solid rgba(255, 255, 255, 0.2)"
-        td_border = "1px solid #E2E8F0" if is_bright else "1px solid rgba(255, 255, 255, 0.08)"
-        td_color = "#1E293B" if is_bright else "#F8FAFC"
-        alt_bg = "#F8FAFC" if is_bright else "rgba(255, 255, 255, 0.02)"
-        dd_bg = "rgba(16, 185, 129, 0.12)" if is_bright else "rgba(16, 185, 129, 0.22)"
-        dd_color = "#047857" if is_bright else "#34D399"
+        th_color = "#0F172A" if is_bright else "#F8FAFC"
+        td_color = "#1E293B" if is_bright else "#F1F5F9"
+        row_border = "#E2E8F0" if is_bright else "rgba(255, 255, 255, 0.08)"
+        row_alt_bg = "#F8FAFC" if is_bright else "rgba(255, 255, 255, 0.03)"
+        highlight_bg = "rgba(16, 185, 129, 0.14)" if is_bright else "rgba(16, 185, 129, 0.20)"
+        highlight_text = "#047857" if is_bright else "#34D399"
+        highlight_badge = "background: #10B981; color: white; padding: 4px 10px; border-radius: 8px; font-size: 13px; margin-left: 10px; font-weight: 700; vertical-align: middle;"
 
         rows_html = ""
-        for idx, row in enumerate(proof_table):
-            m_val = str(row.get("model", ""))
-            acc_val = row.get("accuracy", 0)
-            t_val = row.get("time_s", 0)
-            
-            is_dd = "datadiet" in m_val.lower()
+        for idx, row in df.iterrows():
+            m_name = str(row.get("model", ""))
+            acc_val = row.get("accuracy", "")
+            time_val = row.get("time_s", "")
             
             try:
-                acc_num = float(acc_val)
-                acc_str = f"{acc_num:.2f} ({acc_num*100:.1f}%)" if acc_num <= 1.0 else f"{acc_num:.2f}%"
+                acc_str = f"{float(acc_val):.2f}"
             except Exception:
                 acc_str = str(acc_val)
                 
-            t_str = f"{t_val}s"
+            try:
+                time_str = f"{float(time_val):.1f}s"
+            except Exception:
+                time_str = f"{time_val}s"
 
-            if is_dd:
-                row_style = f"background: {dd_bg}; font-weight: 700;"
-                model_html = f"""<span style="font-size: 19px; font-weight: 800; color: {dd_color};">🌱 {m_val}</span>
-                                 <span style="background: #10B981; color: white !important; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; margin-left: 10px; vertical-align: middle;">BEST IMPACT</span>"""
-                acc_html = f"""<span style="font-size: 20px; font-weight: 800; color: {dd_color};">{acc_str}</span>"""
-                time_html = f"""<span style="font-size: 20px; font-weight: 800; color: {dd_color};">{t_str}</span>"""
-            else:
-                bg = alt_bg if (idx % 2 == 1) else tbl_bg
-                row_style = f"background: {bg};"
-                model_html = f"""<span style="font-size: 18px; font-weight: 600; color: {td_color};">{m_val}</span>"""
-                acc_html = f"""<span style="font-size: 18px; font-weight: 600; color: {td_color};">{acc_str}</span>"""
-                time_html = f"""<span style="font-size: 18px; font-weight: 600; color: {td_color};">{t_str}</span>"""
+            is_dd = "DataDiet" in m_name
+            bg_style = f"background-color: {highlight_bg};" if is_dd else (f"background-color: {row_alt_bg};" if idx % 2 == 1 else f"background-color: {tbl_bg};")
+            text_color_style = f"color: {highlight_text}; font-weight: 700;" if is_dd else f"color: {td_color}; font-weight: 600;"
+            badge = f'<span style="{highlight_badge}">OPTIMAL</span>' if is_dd else ''
 
             rows_html += f"""
-            <tr style="{row_style} border-bottom: {td_border};">
-                <td style="padding: 18px 24px; text-align: left;">{model_html}</td>
-                <td style="padding: 18px 24px; text-align: center;">{acc_html}</td>
-                <td style="padding: 18px 24px; text-align: right;">{time_html}</td>
+            <tr style="{bg_style} border-bottom: 1px solid {row_border};">
+                <td style="padding: 22px 28px; font-size: 19px; {text_color_style} text-align: left;">{m_name}{badge}</td>
+                <td style="padding: 22px 28px; font-size: 19px; {text_color_style} text-align: center;">{acc_str}</td>
+                <td style="padding: 22px 28px; font-size: 19px; {text_color_style} text-align: right;">{time_str}</td>
             </tr>
             """
 
         table_html = f"""
-        <div style="width: 100%; overflow-x: auto; margin-top: 15px; margin-bottom: 25px; border-radius: 16px; border: {tbl_border}; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08);">
-            <table style="width: 100%; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: {tbl_bg};">
+        <div style="width: 100%; margin: 16px 0 24px 0; border: 1px solid {tbl_border}; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.08);">
+            <table style="width: 100%; border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
                 <thead>
-                    <tr style="background: {th_bg}; border-bottom: {th_border};">
-                        <th style="padding: 18px 24px; text-align: left; font-size: 17px; font-weight: 800; color: {th_color}; text-transform: uppercase; letter-spacing: 0.05em;">Model / Strategy</th>
-                        <th style="padding: 18px 24px; text-align: center; font-size: 17px; font-weight: 800; color: {th_color}; text-transform: uppercase; letter-spacing: 0.05em;">Accuracy</th>
-                        <th style="padding: 18px 24px; text-align: right; font-size: 17px; font-weight: 800; color: {th_color}; text-transform: uppercase; letter-spacing: 0.05em;">Training Time</th>
+                    <tr style="background-color: {th_bg}; border-bottom: 2px solid {tbl_border};">
+                        <th style="padding: 20px 28px; font-size: 17px; font-weight: 800; color: {th_color}; text-transform: uppercase; letter-spacing: 0.05em; text-align: left;">Model</th>
+                        <th style="padding: 20px 28px; font-size: 17px; font-weight: 800; color: {th_color}; text-transform: uppercase; letter-spacing: 0.05em; text-align: center;">Accuracy</th>
+                        <th style="padding: 20px 28px; font-size: 17px; font-weight: 800; color: {th_color}; text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">Training Time</th>
                     </tr>
                 </thead>
                 <tbody>
