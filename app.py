@@ -273,7 +273,12 @@ bright_styles = """
     /* Table & Progress in Bright Mode */
     [data-testid="stDataFrame"] {
         background-color: #FFFFFF !important;
-        border: 1px solid #E2E8F0 !important;
+        border: 1px solid #CBD5E1 !important;
+        border-radius: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        font-size: 18px !important;
     }
     [data-testid="stAlert"] {
         background-color: #F8FAFC !important;
@@ -511,8 +516,13 @@ dark_styles = """
 
     /* Table & Progress in Dark Mode */
     [data-testid="stDataFrame"] {
-        background-color: #1F2937 !important;
+        background-color: #111827 !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        font-size: 18px !important;
     }
     [data-testid="stAlert"] {
         background-color: #1F2937 !important;
@@ -938,9 +948,66 @@ elif st.session_state.step == 3:
     st.markdown("### 📊 Performance Benchmark Table")
     if proof_table:
         df = pd.DataFrame(proof_table)
-        st.dataframe(df, use_container_width=True)
+        is_bright = (current_theme == "Bright Mode")
+        bg_col = "#FFFFFF" if is_bright else "#1E293B"
+        text_col = "#0F172A" if is_bright else "#F8FAFC"
+        border_col = "#CBD5E1" if is_bright else "rgba(255, 255, 255, 0.15)"
+        
+        try:
+            format_dict = {}
+            if "accuracy" in df.columns:
+                format_dict["accuracy"] = "{:.2f}"
+            if "time_s" in df.columns:
+                format_dict["time_s"] = "{:.1f}s"
+                
+            styled_df = df.style.format(format_dict).set_properties(**{
+                'background-color': bg_col,
+                'color': text_col,
+                'font-size': '18px',
+                'font-weight': '600',
+                'border-color': border_col
+            })
+            st.dataframe(styled_df, use_container_width=True)
+        except Exception:
+            st.dataframe(df, use_container_width=True)
 
     st.write("")
+    pruned_csv_df = None
+    uploaded_f = st.session_state.get("uploaded_file")
+    if uploaded_f is not None:
+        try:
+            if hasattr(uploaded_f, "seek"):
+                uploaded_f.seek(0)
+            fname = getattr(uploaded_f, "name", "").lower()
+            if fname.endswith(".csv"):
+                full_df = pd.read_csv(uploaded_f)
+                keep_fraction = float(st.session_state.get("keep_share_val", 40)) / 100.0
+                k_count = max(1, min(len(full_df), int(round(len(full_df) * keep_fraction))))
+                pruned_csv_df = full_df.iloc[:k_count]
+            if hasattr(uploaded_f, "seek"):
+                uploaded_f.seek(0)
+        except Exception:
+            pruned_csv_df = None
+
+    if pruned_csv_df is None:
+        pruned_csv_df = pd.DataFrame({
+            "feature_dim_1": x_pruned,
+            "feature_dim_2": y_pruned
+        })
+
+    pruned_csv_bytes = pruned_csv_df.to_csv(index=False).encode('utf-8')
+    active_name = st.session_state.get("uploaded_file_data", {}).get("name", "dataset.csv") if isinstance(st.session_state.get("uploaded_file_data"), dict) else "dataset.csv"
+    base_name = active_name.rsplit(".", 1)[0]
+    out_csv_filename = f"pruned_{base_name}.csv"
+
+    st.download_button(
+        label="📥 Download Pruned Dataset (CSV)",
+        data=pruned_csv_bytes,
+        file_name=out_csv_filename,
+        mime="text/csv",
+        use_container_width=True
+    )
+
     if st.button("🔄 Run Another Dataset Optimization", use_container_width=True):
         st.session_state.step = 1
         st.session_state.slide_idx = 0
