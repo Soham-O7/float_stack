@@ -3,7 +3,13 @@ import pandas as pd
 import time
 import numpy as np
 import plotly.graph_objects as go
-from client import fetch_backend_stub
+import importlib
+import client
+try:
+    importlib.reload(client)
+except Exception:
+    pass
+from client import fetch_backend_stub, generate_dynamic_stub
 
 # 1. Page Configuration
 st.set_page_config(
@@ -768,9 +774,18 @@ if st.session_state.step == 1:
     if st.button("🚀 Optimize My Dataset", type="primary", use_container_width=True):
         if uploaded_file is not None:
             st.session_state["uploaded_file"] = uploaded_file
+            file_size_val = getattr(uploaded_file, "size", None)
+            if file_size_val is None and hasattr(uploaded_file, "getbuffer"):
+                try:
+                    file_size_val = len(uploaded_file.getbuffer())
+                except Exception:
+                    file_size_val = 1048576
+            elif file_size_val is None:
+                file_size_val = 1048576
+
             st.session_state["uploaded_file_data"] = {
                 "name": uploaded_file.name,
-                "size": uploaded_file.size,
+                "size": int(file_size_val),
                 "type": getattr(uploaded_file, "type", "text/csv")
             }
         st.session_state["keep_share_val"] = keep_share
@@ -800,12 +815,24 @@ elif st.session_state.step == 2:
         else:
             status_text.markdown("📈 **Retraining model:** Side-by-side accuracy validation...")
             
-    res = fetch_backend_stub(
-        file_info=st.session_state.get("uploaded_file_data"),
-        uploaded_file=st.session_state.get("uploaded_file"),
-        keep_share=st.session_state.get("keep_share_val", 40),
-        method=st.session_state.get("method_val", "Smart Recommended")
-    )
+    try:
+        res = fetch_backend_stub(
+            file_info=st.session_state.get("uploaded_file_data"),
+            uploaded_file=st.session_state.get("uploaded_file"),
+            keep_share=st.session_state.get("keep_share_val", 40),
+            method=st.session_state.get("method_val", "Smart Recommended")
+        )
+    except Exception:
+        file_info_obj = st.session_state.get("uploaded_file_data")
+        file_name_val = file_info_obj.get("name", "dataset.csv") if isinstance(file_info_obj, dict) else "dataset.csv"
+        file_size_val = file_info_obj.get("size", 1048576) if isinstance(file_info_obj, dict) else 1048576
+        res = generate_dynamic_stub(
+            filename=file_name_val,
+            file_size=file_size_val,
+            keep_share=st.session_state.get("keep_share_val", 40),
+            method=st.session_state.get("method_val", "Smart Recommended"),
+            file_obj=st.session_state.get("uploaded_file")
+        )
     st.session_state.backend_data = res
     st.session_state.step = 3
     st.rerun()
