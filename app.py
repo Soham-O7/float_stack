@@ -747,6 +747,12 @@ if st.session_state.step == 1:
         uploaded_file = st.file_uploader("Drag and drop your files here (ZIP, CSV up to 500 MB)", type=["csv", "zip"])
         st.info("💡 **Tip:** Or click below to use the built-in MNIST sample data (60,000 images).")
         if st.button("Use MNIST Sample Data", use_container_width=True):
+            st.session_state["uploaded_file"] = None
+            st.session_state["uploaded_file_data"] = {
+                "name": "mnist_sample.zip",
+                "size": 15420000,
+                "type": "application/zip"
+            }
             st.success("mnist_sample.zip selected successfully!")
 
     with col_c2:
@@ -760,6 +766,15 @@ if st.session_state.step == 1:
         
     st.write("")
     if st.button("🚀 Optimize My Dataset", type="primary", use_container_width=True):
+        if uploaded_file is not None:
+            st.session_state["uploaded_file"] = uploaded_file
+            st.session_state["uploaded_file_data"] = {
+                "name": uploaded_file.name,
+                "size": uploaded_file.size,
+                "type": getattr(uploaded_file, "type", "text/csv")
+            }
+        st.session_state["keep_share_val"] = keep_share
+        st.session_state["method_val"] = method
         st.session_state.step = 2
         st.rerun()
         
@@ -785,7 +800,12 @@ elif st.session_state.step == 2:
         else:
             status_text.markdown("📈 **Retraining model:** Side-by-side accuracy validation...")
             
-    res = fetch_backend_stub()
+    res = fetch_backend_stub(
+        file_info=st.session_state.get("uploaded_file_data"),
+        uploaded_file=st.session_state.get("uploaded_file"),
+        keep_share=st.session_state.get("keep_share_val", 40),
+        method=st.session_state.get("method_val", "Smart Recommended")
+    )
     st.session_state.backend_data = res
     st.session_state.step = 3
     st.rerun()
@@ -804,27 +824,33 @@ elif st.session_state.step == 3:
         res = {}
     report = res.get("health_report", {})
     proof_table = res.get("proof_table", [])
+    metrics = res.get("metrics", {})
     
+    size_reduced_val = metrics.get("size_reduced", "-60%")
+    energy_saved_val = metrics.get("energy_saved", "-59%")
+    acc_change_val = metrics.get("accuracy_change", "-0.2 pts")
+    acc_box_class = metrics.get("acc_box_class", "metric-box-purple")
+
     # Impact Metric Cards matching the PDF design layout
     m1, m2, m3 = st.columns(3)
     with m1:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-box-green">
-            <h2>-60%</h2>
+            <h2>{size_reduced_val}</h2>
             <p>Data Size Reduced</p>
         </div>
         """, unsafe_allow_html=True)
     with m2:
-        st.markdown("""
+        st.markdown(f"""
         <div class="metric-box-green">
-            <h2>-59%</h2>
+            <h2>{energy_saved_val}</h2>
             <p>Energy & CO₂ Saved</p>
         </div>
         """, unsafe_allow_html=True)
     with m3:
-        st.markdown("""
-        <div class="metric-box-purple">
-            <h2>-0.2 pts</h2>
+        st.markdown(f"""
+        <div class="{acc_box_class}">
+            <h2>{acc_change_val}</h2>
             <p>Accuracy Change</p>
         </div>
         """, unsafe_allow_html=True)
@@ -834,13 +860,20 @@ elif st.session_state.step == 3:
 
     st.markdown("### 📊 Dataset Sample Distribution Comparison")
 
-    np.random.seed(42)
-    x_orig = np.random.randn(500)
-    y_orig = np.random.randn(500)
+    pruning_res = res.get("pruning_results", {})
+    if pruning_res and "x_orig" in pruning_res:
+        x_orig = np.array(pruning_res["x_orig"])
+        y_orig = np.array(pruning_res["y_orig"])
+        x_pruned = np.array(pruning_res["x_pruned"])
+        y_pruned = np.array(pruning_res["y_pruned"])
+    else:
+        np.random.seed(42)
+        x_orig = np.random.randn(500)
+        y_orig = np.random.randn(500)
 
-    keep_idx = np.random.choice(500, size=200, replace=False)
-    x_pruned = x_orig[keep_idx]
-    y_pruned = y_orig[keep_idx]
+        keep_idx = np.random.choice(500, size=200, replace=False)
+        x_pruned = x_orig[keep_idx]
+        y_pruned = y_orig[keep_idx]
 
     fig = go.Figure()
 
