@@ -119,15 +119,33 @@ async def download_pruned_dataset(id: str):
     return FileResponse(output_path, media_type="application/octet-stream", filename=f"pruned_{id}.parquet")
 
 @app.get("/stub/result")
-async def stub_result():
-    """Stub endpoint for Member 4 to build frontend UI immediately."""
-    return {
-        "status": "done",
-        "health_report": {"n_rows": 1634, "dup_share": 0.15, "noisy_share": 0.05, "health_score": 80.0},
-        "chosen_method": "dd_hard",
-        "proof_table": [
-            {"model": "Full data", "accuracy": 0.81, "time_s": 2.5},
-            {"model": "Random 40%", "accuracy": 0.82, "time_s": 1.1},
-            {"model": "DataDiet 40%", "accuracy": 0.94, "time_s": 0.9}
-        ]
-    }
+@app.post("/stub/result")
+async def stub_result(
+    filename: str = "dataset.csv",
+    file_size: int = 1048576,
+    keep_share: float = 40.0,
+    method: str = "Smart Recommended"
+):
+    """Stub endpoint providing dynamic dataset pruning metrics and proof results based on file properties and config."""
+    try:
+        from client import generate_dynamic_stub
+        return generate_dynamic_stub(filename=filename, file_size=file_size, keep_share=keep_share, method=method)
+    except Exception:
+        keep_pct = int(round(float(keep_share)))
+        reduced_pct = 100 - keep_pct
+        return {
+            "status": "done",
+            "health_report": {"n_rows": 1634, "dup_share": 0.15, "noisy_share": 0.05, "health_score": 80.0},
+            "chosen_method": "dd_smart",
+            "metrics": {
+                "size_reduced": f"-{reduced_pct}%",
+                "energy_saved": f"-{max(10, reduced_pct - 1)}%",
+                "accuracy_change": "+0.2 pts",
+                "acc_box_class": "metric-box-green"
+            },
+            "proof_table": [
+                {"model": "Full data", "accuracy": 0.81, "time_s": 2.5},
+                {"model": f"Random {keep_pct}%", "accuracy": 0.77, "time_s": 1.1},
+                {"model": f"DataDiet {keep_pct}%", "accuracy": 0.83, "time_s": 0.9}
+            ]
+        }
