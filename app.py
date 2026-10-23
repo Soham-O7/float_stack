@@ -941,6 +941,42 @@ elif st.session_state.step == 3:
         st.dataframe(df, use_container_width=True)
 
     st.write("")
+    pruned_csv_df = None
+    uploaded_f = st.session_state.get("uploaded_file")
+    if uploaded_f is not None:
+        try:
+            if hasattr(uploaded_f, "seek"):
+                uploaded_f.seek(0)
+            fname = getattr(uploaded_f, "name", "").lower()
+            if fname.endswith(".csv"):
+                full_df = pd.read_csv(uploaded_f)
+                keep_fraction = float(st.session_state.get("keep_share_val", 40)) / 100.0
+                k_count = max(1, min(len(full_df), int(round(len(full_df) * keep_fraction))))
+                pruned_csv_df = full_df.iloc[:k_count]
+            if hasattr(uploaded_f, "seek"):
+                uploaded_f.seek(0)
+        except Exception:
+            pruned_csv_df = None
+
+    if pruned_csv_df is None:
+        pruned_csv_df = pd.DataFrame({
+            "feature_dim_1": x_pruned,
+            "feature_dim_2": y_pruned
+        })
+
+    pruned_csv_bytes = pruned_csv_df.to_csv(index=False).encode('utf-8')
+    active_name = st.session_state.get("uploaded_file_data", {}).get("name", "dataset.csv") if isinstance(st.session_state.get("uploaded_file_data"), dict) else "dataset.csv"
+    base_name = active_name.rsplit(".", 1)[0]
+    out_csv_filename = f"pruned_{base_name}.csv"
+
+    st.download_button(
+        label="📥 Download Pruned Dataset (CSV)",
+        data=pruned_csv_bytes,
+        file_name=out_csv_filename,
+        mime="text/csv",
+        use_container_width=True
+    )
+
     if st.button("🔄 Run Another Dataset Optimization", use_container_width=True):
         st.session_state.step = 1
         st.session_state.slide_idx = 0
