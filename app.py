@@ -275,7 +275,10 @@ bright_styles = """
         background-color: #FFFFFF !important;
         border: 1px solid #CBD5E1 !important;
         border-radius: 12px !important;
-        zoom: 1.18;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        font-size: 18px !important;
     }
     [data-testid="stAlert"] {
         background-color: #F8FAFC !important;
@@ -516,7 +519,10 @@ dark_styles = """
         background-color: #111827 !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
         border-radius: 12px !important;
-        zoom: 1.18;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        font-size: 18px !important;
     }
     [data-testid="stAlert"] {
         background-color: #1F2937 !important;
@@ -948,10 +954,16 @@ elif st.session_state.step == 3:
         border_col = "#CBD5E1" if is_bright else "rgba(255, 255, 255, 0.15)"
         
         try:
-            styled_df = df.style.set_properties(**{
+            format_dict = {}
+            if "accuracy" in df.columns:
+                format_dict["accuracy"] = "{:.2f}"
+            if "time_s" in df.columns:
+                format_dict["time_s"] = "{:.1f}s"
+                
+            styled_df = df.style.format(format_dict).set_properties(**{
                 'background-color': bg_col,
                 'color': text_col,
-                'font-size': '16px',
+                'font-size': '18px',
                 'font-weight': '600',
                 'border-color': border_col
             })
