@@ -783,6 +783,7 @@ with tab4:
     keep_pct = max(10.0, min(95.0, keep_pct))
 
     # Compute realistic, dynamic training and infrastructure cost
+    usd_to_inr = 84.0
     compute_unit = 0.0018
     orig_compute = round(max(4.50, n_rows * compute_unit), 2)
     pruned_compute = round(orig_compute * (keep_pct / 100.0) * 0.95, 2)
@@ -797,11 +798,11 @@ with tab4:
     saved = round(orig_total - pruned_total, 2)
     savings_pct = round((saved / orig_total) * 100.0, 1) if orig_total > 0 else 0.0
 
-    # Summary Metrics
+    # Summary Metrics showing both USD ($) and INR (₹)
     col_m1, col_m2, col_m3 = st.columns(3)
-    col_m1.metric("Original Dataset Cost", f"${orig_total:,.2f}", f"{n_rows:,} samples")
-    col_m2.metric("Pruned Dataset Cost", f"${pruned_total:,.2f}", f"-{savings_pct:.1f}% cost", delta_color="inverse")
-    col_m3.metric("Total Cost Optimized", f"${saved:,.2f}", "Saved via Pruning")
+    col_m1.metric("Original Dataset Cost", f"${orig_total:,.2f} (₹{orig_total * usd_to_inr:,.2f})", f"{n_rows:,} samples")
+    col_m2.metric("Pruned Dataset Cost", f"${pruned_total:,.2f} (₹{pruned_total * usd_to_inr:,.2f})", f"-{savings_pct:.1f}% cost", delta_color="inverse")
+    col_m3.metric("Total Cost Optimized", f"${saved:,.2f} (₹{saved * usd_to_inr:,.2f})", "Saved via Pruning")
 
     # Bar Graph comparing costs
     fig_bar = go.Figure()
@@ -812,7 +813,7 @@ with tab4:
     fig_bar.add_trace(go.Bar(
         x=categories,
         y=costs,
-        text=[f"${c:,.2f}" for c in costs],
+        text=[f"${c:,.2f} (₹{c * usd_to_inr:,.2f})" for c in costs],
         textposition="outside",
         marker=dict(
             color=colors,
@@ -825,37 +826,37 @@ with tab4:
     fig_bar.update_layout(
         title=f"Training & Compute Cost Comparison ({filename})",
         xaxis_title="Dataset Variant",
-        yaxis_title="Estimated Cost ($ USD)",
+        yaxis_title="Estimated Cost ($ USD / ₹ INR)",
         template=chart_template,
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         height=450,
         margin=dict(l=20, r=20, t=50, b=20),
-        yaxis=dict(range=[0, max(costs) * 1.25])
+        yaxis=dict(range=[0, max(costs) * 1.3])
     )
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    # Cost Breakdown Table
+    # Cost Breakdown Table showing both USD and INR
     breakdown_df = pd.DataFrame([
         {
             "Cost Category": "Model Training Compute Cost",
-            "Original Dataset": f"${orig_compute:,.2f}",
-            "Pruned Dataset": f"${pruned_compute:,.2f}",
-            "Savings ($)": f"${orig_compute - pruned_compute:,.2f}",
+            "Original Dataset": f"${orig_compute:,.2f} (₹{orig_compute * usd_to_inr:,.2f})",
+            "Pruned Dataset": f"${pruned_compute:,.2f} (₹{pruned_compute * usd_to_inr:,.2f})",
+            "Savings ($ / ₹)": f"${orig_compute - pruned_compute:,.2f} (₹{(orig_compute - pruned_compute) * usd_to_inr:,.2f})",
             "Savings (%)": f"{(1 - pruned_compute / orig_compute) * 100:.1f}%" if orig_compute > 0 else "0%"
         },
         {
             "Cost Category": "Cloud Storage & Data Ingestion",
-            "Original Dataset": f"${orig_storage:,.2f}",
-            "Pruned Dataset": f"${pruned_storage:,.2f}",
-            "Savings ($)": f"${orig_storage - pruned_storage:,.2f}",
+            "Original Dataset": f"${orig_storage:,.2f} (₹{orig_storage * usd_to_inr:,.2f})",
+            "Pruned Dataset": f"${pruned_storage:,.2f} (₹{pruned_storage * usd_to_inr:,.2f})",
+            "Savings ($ / ₹)": f"${orig_storage - pruned_storage:,.2f} (₹{(orig_storage - pruned_storage) * usd_to_inr:,.2f})",
             "Savings (%)": f"{(1 - pruned_storage / orig_storage) * 100:.1f}%" if orig_storage > 0 else "0%"
         },
         {
             "Cost Category": "Total Estimated Pipeline Cost",
-            "Original Dataset": f"${orig_total:,.2f}",
-            "Pruned Dataset": f"${pruned_total:,.2f}",
-            "Savings ($)": f"${saved:,.2f}",
+            "Original Dataset": f"${orig_total:,.2f} (₹{orig_total * usd_to_inr:,.2f})",
+            "Pruned Dataset": f"${pruned_total:,.2f} (₹{pruned_total * usd_to_inr:,.2f})",
+            "Savings ($ / ₹)": f"${saved:,.2f} (₹{saved * usd_to_inr:,.2f})",
             "Savings (%)": f"{savings_pct:.1f}%"
         }
     ])
