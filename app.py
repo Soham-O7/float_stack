@@ -782,8 +782,27 @@ with tab4:
 
     keep_pct = max(10.0, min(95.0, keep_pct))
 
-    # Compute realistic, dynamic training and infrastructure cost
-    usd_to_inr = 84.0
+    # Compute realistic, dynamic training and infrastructure cost with accurate live USD to INR exchange rate
+    @st.cache_data(ttl=3600)
+    def _get_usd_to_inr():
+        for api_url in [
+            "https://open.er-api.com/v6/latest/USD",
+            "https://api.exchangerate-api.com/v4/latest/USD"
+        ]:
+            try:
+                import urllib.request
+                import json
+                req = urllib.request.Request(api_url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=1.5) as resp:
+                    data = json.loads(resp.read().decode())
+                    rate = float(data.get("rates", {}).get("INR", 0))
+                    if rate > 50:
+                        return round(rate, 2)
+            except Exception:
+                continue
+        return 95.04
+
+    usd_to_inr = _get_usd_to_inr()
     compute_unit = 0.0018
     orig_compute = round(max(4.50, n_rows * compute_unit), 2)
     pruned_compute = round(orig_compute * (keep_pct / 100.0) * 0.95, 2)
