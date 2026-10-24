@@ -673,7 +673,7 @@ with theme_col_widget:
     )
 
 # 1. Create the tabs here:
-tab1, tab2, tab3 = st.tabs(["📁 Upload & Config", "⚙️ Optimized Output", "📊 Scatter Analysis"])
+tab1, tab2, tab3, tab4 = st.tabs(["📁 Upload & Config", "⚙️ Optimized Output", "📊 Scatter Analysis", "Analytics"])
 
 with tab1:
     st.subheader("Upload Dataset")
@@ -712,6 +712,155 @@ with tab3:
         margin=dict(l=20, r=20, t=30, b=20)
     )
     st.plotly_chart(fig, use_container_width=True)
+
+with tab4:
+    st.subheader("Cost Optimization Analytics")
+    
+    # Dynamically determine dataset properties from uploaded file or session state
+    active_file = uploaded_file if (uploaded_file is not None) else st.session_state.get("uploaded_file")
+    active_file_data = st.session_state.get("uploaded_file_data")
+    backend_res = st.session_state.get("backend_data")
+    keep_pct = float(st.session_state.get("keep_share_val", 40.0))
+
+    filename = "dataset.csv"
+    file_size = 1048576
+    n_rows = 2400
+
+    if active_file is not None:
+        filename = getattr(active_file, "name", "dataset.csv")
+        f_size = getattr(active_file, "size", None)
+        if f_size is not None:
+            file_size = int(f_size)
+        fname_lower = filename.lower()
+        if fname_lower.endswith(".csv") or fname_lower.endswith(".txt"):
+            try:
+                if hasattr(active_file, "seek"):
+                    active_file.seek(0)
+                df_preview = pd.read_csv(active_file)
+                n_rows = len(df_preview)
+                if hasattr(active_file, "seek"):
+                    active_file.seek(0)
+            except Exception:
+                n_rows = max(500, int(file_size / 150))
+        elif fname_lower.endswith(".zip"):
+            try:
+                if hasattr(active_file, "seek"):
+                    active_file.seek(0)
+                import zipfile
+                with zipfile.ZipFile(active_file, "r") as zf:
+                    entries = [f for f in zf.namelist() if not f.endswith("/") and not f.startswith("__MACOSX")]
+                    n_rows = len(entries) if entries else len(zf.namelist())
+                if hasattr(active_file, "seek"):
+                    active_file.seek(0)
+            except Exception:
+                n_rows = 60000 if "mnist" in fname_lower else max(500, int(file_size / 250))
+        else:
+            n_rows = max(500, int(file_size / 150))
+
+    elif isinstance(active_file_data, dict):
+        filename = active_file_data.get("name", "dataset.csv")
+        file_size = active_file_data.get("size", 1048576)
+        if "mnist" in filename.lower():
+            n_rows = 60000
+        else:
+            n_rows = max(500, int(file_size / 150))
+
+    if backend_res and isinstance(backend_res, dict):
+        h_rep = backend_res.get("health_report", {})
+        if isinstance(h_rep, dict) and h_rep.get("n_rows"):
+            n_rows = int(h_rep["n_rows"])
+        if backend_res.get("filename"):
+            filename = backend_res["filename"]
+        if backend_res.get("file_size"):
+            file_size = int(backend_res["file_size"])
+        try:
+            size_red_str = backend_res.get("metrics", {}).get("size_reduced", "-60%")
+            red_num = float(size_red_str.replace("%", "").replace("-", "").strip())
+            keep_pct = 100.0 - red_num
+        except Exception:
+            pass
+
+    keep_pct = max(10.0, min(95.0, keep_pct))
+
+    # Compute realistic, dynamic training and infrastructure cost
+    compute_unit = 0.0018
+    orig_compute = round(max(4.50, n_rows * compute_unit), 2)
+    pruned_compute = round(orig_compute * (keep_pct / 100.0) * 0.95, 2)
+
+    mb_size = max(0.1, file_size / (1024.0 * 1024.0))
+    storage_unit = 0.045
+    orig_storage = round(max(1.20, mb_size * storage_unit), 2)
+    pruned_storage = round(orig_storage * (keep_pct / 100.0), 2)
+
+    orig_total = round(orig_compute + orig_storage, 2)
+    pruned_total = round(pruned_compute + pruned_storage, 2)
+    saved = round(orig_total - pruned_total, 2)
+    savings_pct = round((saved / orig_total) * 100.0, 1) if orig_total > 0 else 0.0
+
+    # Summary Metrics
+    col_m1, col_m2, col_m3 = st.columns(3)
+    col_m1.metric("Original Dataset Cost", f"${orig_total:,.2f}", f"{n_rows:,} samples")
+    col_m2.metric("Pruned Dataset Cost", f"${pruned_total:,.2f}", f"-{savings_pct:.1f}% cost", delta_color="inverse")
+    col_m3.metric("Total Cost Optimized", f"${saved:,.2f}", "Saved via Pruning")
+
+    # Bar Graph comparing costs
+    fig_bar = go.Figure()
+    categories = ["Original Dataset", "Pruned Dataset (DataDiet)"]
+    costs = [orig_total, pruned_total]
+    colors = ["#FF6B6B", "#10B981"]
+
+    fig_bar.add_trace(go.Bar(
+        x=categories,
+        y=costs,
+        text=[f"${c:,.2f}" for c in costs],
+        textposition="outside",
+        marker=dict(
+            color=colors,
+            line=dict(color=["rgba(255, 107, 107, 0.4)", "rgba(16, 185, 129, 0.4)"], width=1.5)
+        ),
+        width=0.45
+    ))
+
+    chart_template = "plotly_white" if current_theme == "Bright Mode" else "plotly_dark"
+    fig_bar.update_layout(
+        title=f"Training & Compute Cost Comparison ({filename})",
+        xaxis_title="Dataset Variant",
+        yaxis_title="Estimated Cost ($ USD)",
+        template=chart_template,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=450,
+        margin=dict(l=20, r=20, t=50, b=20),
+        yaxis=dict(range=[0, max(costs) * 1.25])
+    )
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    # Cost Breakdown Table
+    breakdown_df = pd.DataFrame([
+        {
+            "Cost Category": "Model Training Compute Cost",
+            "Original Dataset": f"${orig_compute:,.2f}",
+            "Pruned Dataset": f"${pruned_compute:,.2f}",
+            "Savings ($)": f"${orig_compute - pruned_compute:,.2f}",
+            "Savings (%)": f"{(1 - pruned_compute / orig_compute) * 100:.1f}%" if orig_compute > 0 else "0%"
+        },
+        {
+            "Cost Category": "Cloud Storage & Data Ingestion",
+            "Original Dataset": f"${orig_storage:,.2f}",
+            "Pruned Dataset": f"${pruned_storage:,.2f}",
+            "Savings ($)": f"${orig_storage - pruned_storage:,.2f}",
+            "Savings (%)": f"{(1 - pruned_storage / orig_storage) * 100:.1f}%" if orig_storage > 0 else "0%"
+        },
+        {
+            "Cost Category": "Total Estimated Pipeline Cost",
+            "Original Dataset": f"${orig_total:,.2f}",
+            "Pruned Dataset": f"${pruned_total:,.2f}",
+            "Savings ($)": f"${saved:,.2f}",
+            "Savings (%)": f"{savings_pct:.1f}%"
+        }
+    ])
+    st.dataframe(breakdown_df, use_container_width=True)
+
 
 # ==========================================
 # HERO SECTION (Matching PDF Header)
